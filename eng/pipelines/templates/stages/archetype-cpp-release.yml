@@ -143,11 +143,10 @@ stages:
                         displayName: Clone vcpkg from upstream
 
                       - pwsh: git checkout -b $(PrBranchName)
-                        inputs:
-                          workingDirectory: $(VcpkgWorkspace)
+                        workingDirectory: $(VcpkgWorkspace)
                         displayName: Checkout PR Branch
                       
-                      - Powershell@2:
+                      - task: Powershell@2
                         inputs:
                           pwsh: true
                           targetType: filePath
