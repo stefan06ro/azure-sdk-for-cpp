@@ -10,7 +10,7 @@
 #define AZURE_TEMPLATE_VERSION_MAJOR 1
 #define AZURE_TEMPLATE_VERSION_MINOR 0
 #define AZURE_TEMPLATE_VERSION_PATCH 0
-#define AZURE_TEMPLATE_VERSION_PRERELEASE "beta.30"
+#define AZURE_TEMPLATE_VERSION_PRERELEASE "beta.31"
 
 namespace Azure { namespace Template { namespace Details {
 

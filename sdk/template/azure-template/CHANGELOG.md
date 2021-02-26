@@ -1,5 +1,10 @@
 # Release History
 
+## 1.0.0-beta.31 (2021-02-24)
+
+* Validate vcpkg publishing automation
+* Ensure that added "quotes" in the "changelog aren't improperly reflected
+
 ## 1.0.0-beta.30 (2020-02-24)
 
 * Validate vcpkg publishing automation
