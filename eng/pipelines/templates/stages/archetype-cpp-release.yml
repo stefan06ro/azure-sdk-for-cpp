@@ -156,7 +156,7 @@ stages:
                             -DestinationDirectory 'ports/${{ artifact.VcpkgPortName }}'
                             -VcpkgPortName '${{ artifact.VcpkgPortName }}'
                             -ChangelogLocation "$(Pipeline.Workspace)/packages/${{artifact.Name}}/CHANGELOG.md"
-                            -PackageVersion ${env:PACKAGE_VERSION}
+                            -PackageVersion ${env:PACKAGEVERSION}
                             -GitCommitParameters '-c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com"'
                             -PerformFinalCommit $false
                           workingDirectory: $(VcpkgWorkspace)
