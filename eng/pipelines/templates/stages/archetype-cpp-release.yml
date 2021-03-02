@@ -157,6 +157,12 @@ stages:
                           workingDirectory: $(VcpkgWorkspace)
                         displayName: Update vcpkg port
 
+                      # Resetting the previous commit places all changed files
+                      # in the working tree to be committed in 
+                      # `create-pull-request.yml`
+                      - pwsh: git reset HEAD~1
+                        displayName: Reset previous commit
+
                       - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
                         parameters:
                           RepoOwner: Microsoft
