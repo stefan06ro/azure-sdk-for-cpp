@@ -142,10 +142,6 @@ stages:
                           Write-Host "##vso[task.setvariable variable=VcpkgWorkspace]$(Pipeline.Workspace)/vcpkg"
                         displayName: Clone vcpkg from upstream
 
-                      - pwsh: git checkout -b $(PrBranchName)
-                        workingDirectory: $(VcpkgWorkspace)
-                        displayName: Checkout PR Branch
-                      
                       - task: Powershell@2
                         inputs:
                           pwsh: true
