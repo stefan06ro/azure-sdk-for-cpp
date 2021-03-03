@@ -49,7 +49,7 @@ $commitMessageFile = New-TemporaryFile
 $chagelogEntry = Get-ChangeLogEntryAsString `
     -ChangeLogLocation $ChangelogLocation `
     -VersionString $PackageVersion
-"# $VcpkgPortName`n$chagelogEntry" | Set-Content $commitMessageFile
+"[$VcpkgPortName] Update to $PackageVersion`n$chagelogEntry" | Set-Content $commitMessageFile
 
 Write-Host "Commit Message:"
 Write-host (Get-Content $commitMessageFile -Raw)
@@ -67,10 +67,23 @@ Write-Host "git $GitCommitParameters commit --file $commitMessageFile"
 Write-Host "./bootstrap-vcpkg.bat"
 ./bootstrap-vcpkg.bat
 
+if ($LASTEXITCODE -ne 0) { 
+    Write-Error "Failed to run bootstrap-vcpkg.bat"
+    exit 1
+}
+
 Write-Host "./vcpkg.exe x-add-version $VcpkgPortName"
 ./vcpkg.exe x-add-version $VcpkgPortName
 
-if ($PerformFinalCommit) { 
+if ($LASTEXITCODE -ne 0) { 
+    Write-Error "Failed to run vcpkg x-add-version $VcpkgPortName"
+    exit 1
+}
+
+Write-Host "git reset HEAD^"
+git reset HEAD^
+
+if ($PerformFinalCommit) {
     Write-Host "git $GitCommitParameters commit -m `"Update vcpkg version metadata for $VcpkgPortName`""
     . "git $GitCommitParameters commit  -m `"Update vcpkg version metadata for $VcpkgPortName`""
 }

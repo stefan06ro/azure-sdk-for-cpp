@@ -142,6 +142,16 @@ stages:
                           Write-Host "##vso[task.setvariable variable=VcpkgWorkspace]$(Pipeline.Workspace)/vcpkg"
                         displayName: Clone vcpkg from upstream
 
+                      # Check out the PR branch if it's already in remote. 
+                      # Ignore failures.
+                      - pwsh: |
+                          $ErrorActionPreference = "Continue"
+                          git checkout "origin/$(PrBranchName)" 2>&1 | Out-Null
+                          $LASTEXITCODE = 0 # This ignores any error from git checkout
+                          git status
+                        displayName: Checkout Previous PRBranch if it exist.
+                        workingDirectory: $(VcpkgWorkspace)
+
                       - task: Powershell@2
                         inputs:
                           pwsh: true
@@ -156,12 +166,6 @@ stages:
                             -GitCommitParameters '-c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com"'
                           workingDirectory: $(VcpkgWorkspace)
                         displayName: Update vcpkg port
-
-                      # Resetting the previous commit places all changed files
-                      # in the working tree to be committed in 
-                      # `create-pull-request.yml`
-                      - pwsh: git reset HEAD~1
-                        displayName: Reset previous commit
 
                       - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
                         parameters:
