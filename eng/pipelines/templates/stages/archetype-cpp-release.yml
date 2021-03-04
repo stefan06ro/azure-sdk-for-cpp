@@ -185,7 +185,7 @@ stages:
                           RepoName: vcpkg
                           WorkingDirectory: $(Pipeline.Workspace)/vcpkg
                           PrBranchName: $(PrBranchName)
-                          CommitMsg: "(Get-Content ${env:COMMITMESSAGEFILE} -Raw)"
+                          CommitMsg: $(Get-Content ${env:COMMITMESSAGEFILE} -Raw)
                           PRTitle: $(PrTitle)
                           BaseBranchName: master
 
