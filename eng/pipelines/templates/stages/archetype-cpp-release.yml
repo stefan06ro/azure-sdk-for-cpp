@@ -161,11 +161,22 @@ stages:
                             -SourceDirectory "$(Pipeline.Workspace)/packages/${{artifact.Name}}/vcpkg/port"
                             -DestinationDirectory 'ports/${{ artifact.VcpkgPortName }}'
                             -VcpkgPortName '${{ artifact.VcpkgPortName }}'
-                            -ChangelogLocation "$(Pipeline.Workspace)/packages/${{artifact.Name}}/CHANGELOG.md"
                             -PackageVersion ${env:PACKAGEVERSION}
                             -GitCommitParameters '-c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com"'
                           workingDirectory: $(VcpkgWorkspace)
                         displayName: Update vcpkg port
+
+                      - pwsh: |
+                          $commitMessageFile = New-TemporaryFile
+                          $chagelogEntry = Get-ChangeLogEntryAsString `
+                              -ChangeLogLocation "$(Pipeline.Workspace)/packages/${{artifact.Name}}/CHANGELOG.md" `
+                              -VersionString ${env:PACKAGEVERSION}
+                          "[$VcpkgPortName] Update to $PackageVersion`n$chagelogEntry" | Set-Content $commitMessageFile
+
+                          Write-Host "Commit Message:"
+                          Write-host (Get-Content $commitMessageFile -Raw)
+                          Write-Host "##vso[task.setvariable variable=CommitMessageFile]$commitMessageFile"
+                        displayName: Set commit message from CHANGELOG
 
                       - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
                         parameters:
@@ -173,7 +184,7 @@ stages:
                           RepoName: vcpkg
                           WorkingDirectory: $(Pipeline.Workspace)/vcpkg
                           PrBranchName: $(PrBranchName)
-                          CommitMsg: "Update vcpkg version metadata for ${{ artifact.VcpkgPortName }}"
+                          CommitMsg: "(Get-Content ${env:COMMITMESSAGEFILE} -Raw)"
                           PRTitle: $(PrTitle)
                           BaseBranchName: master
 

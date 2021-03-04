@@ -13,15 +13,13 @@ param (
 
     [Parameter(Mandatory = $true)]
     [ValidateNotNullOrEmpty()]
-    [string] $ChangelogLocation,
-
-    [Parameter(Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
     [string] $PackageVersion,
 
     [Parameter(Mandatory = $true)]
     [ValidateNotNullOrEmpty()]
     [string] $GitCommitParameters,
+
+    [string] $ChangelogLocation,
 
     [switch] $PerformFinalCommit = $false 
 )
@@ -45,23 +43,14 @@ Copy-Item `
 Write-Host "Files in destination directory:" 
 Get-ChildItem -Recurse $DestinationDirectory | Out-String | Write-Host
 
-$commitMessageFile = New-TemporaryFile
-$chagelogEntry = Get-ChangeLogEntryAsString `
-    -ChangeLogLocation $ChangelogLocation `
-    -VersionString $PackageVersion
-"[$VcpkgPortName] Update to $PackageVersion`n$chagelogEntry" | Set-Content $commitMessageFile
-
-Write-Host "Commit Message:"
-Write-host (Get-Content $commitMessageFile -Raw)
-
 Write-Host "git status"
 git status
 
 # Commit changes
 Write-Host "git add -A"
 git add -A
-Write-Host "git $GitCommitParameters commit --file $commitMessageFile"
-"git $GitCommitParameters commit --file $commitMessageFile" | Invoke-Expression -Verbose | Write-Host
+Write-Host "git $GitCommitParameters commit -m 'Temporary commit to reset after x-add-version'"
+"git $GitCommitParameters commit -m 'Temporary commit to reset after x-add-version'" | Invoke-Expression -Verbose | Write-Host
 
 
 Write-Host "./bootstrap-vcpkg.bat"
@@ -84,6 +73,15 @@ Write-Host "git reset HEAD^"
 git reset HEAD^
 
 if ($PerformFinalCommit) {
-    Write-Host "git $GitCommitParameters commit -m `"Update vcpkg version metadata for $VcpkgPortName`""
-    . "git $GitCommitParameters commit  -m `"Update vcpkg version metadata for $VcpkgPortName`""
+    $commitMessageFile = New-TemporaryFile
+    $chagelogEntry = Get-ChangeLogEntryAsString `
+        -ChangeLogLocation $ChangelogLocation `
+        -VersionString $PackageVersion
+    "[$VcpkgPortName] Update to $PackageVersion`n$chagelogEntry" | Set-Content $commitMessageFile
+    
+    Write-Host "Commit Message:"
+    Write-host (Get-Content $commitMessageFile -Raw)
+
+    Write-Host "git $GitCommitParameters commit --file $commitMessageFile"
+    "git $GitCommitParameters commit --file $commitMessageFile" | Invoke-Expression -Verbose | Write-Host
 }
