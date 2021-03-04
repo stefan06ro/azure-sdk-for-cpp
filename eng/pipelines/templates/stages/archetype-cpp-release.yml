@@ -167,7 +167,7 @@ stages:
                         displayName: Update vcpkg port
 
                       - pwsh: |
-                          ."eng/common/common.ps1"
+                          ."./eng/common/common.ps1"
                           $commitMessageFile = New-TemporaryFile
                           $chagelogEntry = Get-ChangeLogEntryAsString `
                               -ChangeLogLocation "$(Pipeline.Workspace)/packages/${{artifact.Name}}/CHANGELOG.md" `
