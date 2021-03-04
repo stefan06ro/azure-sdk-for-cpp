@@ -103,7 +103,11 @@ stages:
                       - pwsh: |
                           $packageSpec = Get-Content -Raw -Path "$(Pipeline.Workspace)/packages/${{artifact.Name}}/package-info.json" | ConvertFrom-Json
                           $version = $packageSpec.version
-                          $title = "[${{ artifact.VcpkgPortName }}] publish version $version"
+                          Write-Host "##vso[task.setvariable variable=PackageVersion]$version"
+                        displayName: Set PackageVersion variable
+
+                      - pwsh: |
+                          $title = "[${{ artifact.VcpkgPortName }}] publish version $(PackageVersion)"
 
                           if ('$(VcpkgPRTitle)') { 
                             Write-Host "Using queue time PR title"
@@ -111,12 +115,6 @@ stages:
                           }
                           Write-Host "##vso[task.setvariable variable=PrTitle]$title"
                         displayName: Set PR title
-
-                      - pwsh: |
-                          $packageSpec = Get-Content -Raw -Path "$(Pipeline.Workspace)/packages/${{artifact.Name}}/package-info.json" | ConvertFrom-Json
-                          $version = $packageSpec.version
-                          Write-Host "##vso[task.setvariable variable=PackageVersion]$version"
-                        displayName: Set PackageVersion variable
 
                       - task: Powershell@2
                         inputs:
@@ -158,35 +156,29 @@ stages:
                           targetType: filePath
                           filePath: eng/scripts/Update-VcpkgPort.ps1
                           arguments: >-
-                            -SourceDirectory "$(Pipeline.Workspace)/packages/${{artifact.Name}}/vcpkg/port"
-                            -DestinationDirectory 'ports/${{ artifact.VcpkgPortName }}'
+                            -ReleaseArtifactSourceDirectory "$(Pipeline.Workspace)/packages/${{ artifact.Name }}"
+                            -PortDestinationDirectory 'ports/${{ artifact.VcpkgPortName }}'
                             -VcpkgPortName '${{ artifact.VcpkgPortName }}'
-                            -PackageVersion ${env:PACKAGEVERSION}
                             -GitCommitParameters '-c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com"'
                           workingDirectory: $(VcpkgWorkspace)
                         displayName: Update vcpkg port
 
-                      - pwsh: |
-                          ."./eng/common/scripts/common.ps1"
-                          $commitMessageFile = New-TemporaryFile
-                          $chagelogEntry = Get-ChangeLogEntryAsString `
-                              -ChangeLogLocation "$(Pipeline.Workspace)/packages/${{artifact.Name}}/CHANGELOG.md" `
-                              -VersionString ${env:PACKAGEVERSION}
-                          "[$VcpkgPortName] Update to $PackageVersion`n$chagelogEntry" | Set-Content $commitMessageFile
+                      # Set $(HasChanges) to $true so that 
+                      # create-pull-request.yml completes the push and PR 
+                      # submission steps
+                      - pwsh: Write-Host "##vso[task.setvariable variable=HasChanges]$true"
+                        displayName: Set $(HasChanges) to $true for create-pull-request.yml
 
-                          Write-Host "Commit Message:"
-                          Write-host (Get-Content $commitMessageFile -Raw)
-                          Write-Host "##vso[task.setvariable variable=CommitMessageFile]$commitMessageFile"
-                        displayName: Set commit message from CHANGELOG
-
+                      # SkipCheckingForChanges is true to skip the commit step 
+                      # (which is already done by Update-VcpkgPort.ps1)
                       - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
                         parameters:
                           RepoOwner: Microsoft
                           RepoName: vcpkg
                           WorkingDirectory: $(Pipeline.Workspace)/vcpkg
                           PrBranchName: $(PrBranchName)
-                          CommitMsg: $(Get-Content ${env:COMMITMESSAGEFILE} -Raw)
                           PRTitle: $(PrTitle)
+                          SkipCheckingForChanges: true
                           BaseBranchName: master
 
           - ${{if ne(artifact.skipUpdatePackageVersion, 'true')}}:
